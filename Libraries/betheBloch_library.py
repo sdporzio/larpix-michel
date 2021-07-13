@@ -51,6 +51,7 @@ stern_C = 5.2146
 ### LIQUID ARGON RECOMBINATION CONSTANTS
 W = 23.6 # eV needed to produce e-
 elPerMeV = 1./W * 1e6 # Number of electrons produced per MeV (42.37 e- per keV, 42,370 per MeV)
+mvPerEl = 1/245 # The number of mv resulting for each e-
 birks_A = 0.800 # Birks recombination model, parameter A (dim.less)
 birks_k = 0.0486 # Birks recombination model, parameter k (kV/cm)*(g/cm2)/MeV
 box_A = 0.930 # Modified Box recombination model, parameter A (dim.less)
@@ -290,11 +291,11 @@ def Recombination(dedx,model='box',efield=0.5):
         raise Exception("Wrong model. Choose 'box' or 'birks'")
 
 
-dedx = np.linspace(0,10,500)
-dqdx_box = [de*elPerMeV*Recombination(de,model='box') for de in dedx]
-dqdx_birks = [de*elPerMeV*Recombination(de,model='birks') for de in dedx]
-box_inv = interp1d(dqdx_box,dedx,fill_value='extrapolate')
-birks_inv = interp1d(dqdx_birks,dedx,fill_value='extrapolate')
+dedx = np.linspace(0,200,5000)
+dqdx_box = [de*Recombination(de,model='box')*elPerMeV*mvPerEl for de in dedx] # Take as input MeV and return mv
+dqdx_birks = [de*Recombination(de,model='birks')*elPerMeV*mvPerEl for de in dedx] # Take as input MeV and return mv
+box_inv = interp1d(dqdx_box,dedx,fill_value='extrapolate') # Invert the relation to take as input mv and return MeV
+birks_inv = interp1d(dqdx_birks,dedx,fill_value='extrapolate') # Invert the relation to take as input mv and return MeV
 
 def ConvertQtoE(dqdx,model='box'):
     '''
